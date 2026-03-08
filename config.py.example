@@ -1,0 +1,128 @@
+"""
+FinWatch 配置文件示例
+复制此文件为 config.py 并修改配置值
+"""
+
+import os
+
+# Flask配置
+class Config:
+    # 基础配置
+    SECRET_KEY = os.environ.get('SECRET_KEY') or 'your-secret-key-change-this-in-production'
+
+    # 服务器配置
+    HOST = '0.0.0.0'  # 监听所有地址
+    PORT = 5000      # 端口号
+    DEBUG = False    # 生产环境设置为False
+
+    # 文件路径配置
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_DIR = os.path.join(BASE_DIR, 'data')
+    CONFIG_DIR = os.path.join(BASE_DIR, 'config')
+    SUBJECTS_FILE = os.path.join(CONFIG_DIR, 'subjects.json')
+
+    # 数据文件配置
+    ALLOWED_EXTENSIONS = {'csv', 'txt'}
+    MAX_FILE_SIZE = 16 * 1024 * 1024  # 16MB
+
+    # 缓存配置
+    CACHE_TYPE = 'simple'  # 生产环境建议使用Redis
+    CACHE_DEFAULT_TIMEOUT = 300  # 5分钟
+
+    # CORS配置
+    CORS_ORIGINS = ['http://localhost:3000', 'http://your-domain.com']
+
+    # 日志配置
+    LOG_LEVEL = 'INFO'
+    LOG_FILE = 'finwatch.log'
+
+    # 监控配置
+    ENABLE_METRICS = True
+    METRICS_PORT = 9090
+
+    # 安全配置
+    SESSION_COOKIE_SECURE = True  # 生产环境设置为True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+
+    # 性能配置
+    JSONIFY_PRETTYPRINT_REGULAR = False  # 生产环境设置为False
+    JSON_SORT_KEYS = False
+
+    # 数据扫描配置
+    AUTO_SCAN_INTERVAL = 300  # 自动扫描间隔（秒），0表示禁用
+    SCAN_ON_STARTUP = True    # 启动时扫描
+
+    # 数据缓存配置
+    DATA_CACHE_TIMEOUT = 60   # 数据缓存时间（秒）
+
+    # 图表配置
+    CHART_MAX_POINTS = 1000   # 图表最大数据点数
+    CHART_DEFAULT_PERIOD = '1M'  # 默认显示周期: 1D, 1W, 1M, 1Y
+
+    # 导出配置
+    EXPORT_FORMATS = ['csv', 'json', 'excel']
+    EXPORT_MAX_ROWS = 10000
+
+# 开发环境配置
+class DevelopmentConfig(Config):
+    DEBUG = True
+    LOG_LEVEL = 'DEBUG'
+    SESSION_COOKIE_SECURE = False
+    CORS_ORIGINS = ['http://localhost:3000', 'http://localhost:5000']
+    AUTO_SCAN_INTERVAL = 60  # 开发环境更频繁扫描
+
+# 测试环境配置
+class TestingConfig(Config):
+    TESTING = True
+    DEBUG = True
+    DATA_DIR = os.path.join(Config.BASE_DIR, 'test_data')
+    SUBJECTS_FILE = os.path.join(Config.CONFIG_DIR, 'test_subjects.json')
+    SCAN_ON_STARTUP = False
+
+# 生产环境配置
+class ProductionConfig(Config):
+    DEBUG = False
+    LOG_LEVEL = 'WARNING'
+    HOST = '127.0.0.1'  # 生产环境建议只监听本地
+    CORS_ORIGINS = ['https://your-domain.com']
+    AUTO_SCAN_INTERVAL = 3600  # 每小时扫描一次
+
+# 配置映射
+config = {
+    'development': DevelopmentConfig,
+    'testing': TestingConfig,
+    'production': ProductionConfig,
+    'default': DevelopmentConfig
+}
+
+def get_config(config_name=None):
+    """
+    获取配置对象
+
+    Args:
+        config_name: 配置名称 ('development', 'testing', 'production')
+
+    Returns:
+        Config对象
+    """
+    if config_name is None:
+        config_name = os.environ.get('FLASK_ENV', 'default')
+
+    return config.get(config_name, config['default'])
+
+# 使用示例：
+# 1. 复制此文件为 config.py
+# 2. 修改生产环境配置
+# 3. 在 app.py 中导入并使用：
+#    from config import get_config
+#    app.config.from_object(get_config())
+
+if __name__ == '__main__':
+    # 测试配置
+    config_obj = get_config('development')
+    print(f"开发环境配置:")
+    print(f"  DEBUG: {config_obj.DEBUG}")
+    print(f"  HOST: {config_obj.HOST}")
+    print(f"  PORT: {config_obj.PORT}")
+    print(f"  DATA_DIR: {config_obj.DATA_DIR}")

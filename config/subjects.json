@@ -1,0 +1,49 @@
+{
+  "subjects": [
+    {
+      "id": "stock_price",
+      "name": "股票价格",
+      "unit": "元",
+      "category": "市场数据",
+      "description": "某股票每日收盘价",
+      "file": "data/market.csv",
+      "column": "stock_price"
+    },
+    {
+      "id": "interest_rate",
+      "name": "利率",
+      "unit": "%",
+      "category": "货币政策",
+      "description": "央行基准利率",
+      "file": "data/monetary.csv",
+      "column": "interest_rate"
+    },
+    {
+      "id": "multi_index_dividend_H30269_DP2",
+      "name": "H30269_D/P2",
+      "unit": "%",
+      "category": "指数股息率",
+      "description": "中证红利低波动指数股息率",
+      "file": "data/multi_index_dividend.csv",
+      "column": "H30269_D/P2"
+    },
+    {
+      "id": "multi_index_dividend_930914_DP2",
+      "name": "930914_D/P2",
+      "unit": "%",
+      "category": "指数股息率",
+      "description": "中证高股息指数股息率",
+      "file": "data/multi_index_dividend.csv",
+      "column": "930914_D/P2"
+    },
+    {
+      "id": "multi_index_dividend_931446_DP2",
+      "name": "931446_D/P2",
+      "unit": "%",
+      "category": "指数股息率",
+      "description": "中证红利质量指数股息率",
+      "file": "data/multi_index_dividend.csv",
+      "column": "931446_D/P2"
+    }
+  ]
+}

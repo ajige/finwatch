@@ -1,0 +1,9 @@
+Flask==3.0.0
+flask-cors==4.0.0
+pandas==2.2.0
+watchdog==4.0.0
+python-dateutil==2.9.0.post0
+requests==2.31.0  # 可选，用于未来API数据源扩展
+selenium==4.15.2  # 用于自动化浏览器获取动态页面数据
+openpyxl==3.1.5  # 用于读取.xlsx文件
+xlrd==2.0.1  # 用于读取.xls文件
