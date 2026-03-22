@@ -26,6 +26,7 @@ async function initPage() {
     try {
         await loadFilesData();
         await loadSubjects();
+        await loadMacroSummary();  // 加载宏观策略
         updateStats();
     } catch (error) {
         console.error('初始化页面时出错:', error);
@@ -73,6 +74,216 @@ async function loadSubjects() {
         console.error('加载科目时出错:', error);
         showError('无法加载科目数据');
         return [];
+    }
+}
+
+// 加载宏观策略摘要
+async function loadMacroSummary() {
+    try {
+        const response = await fetch('/api/macro-summary');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const result = await response.json();
+        if (result.success && result.data) {
+            renderMacroSummary(result.data);
+        } else {
+            renderMacroEmpty();
+        }
+    } catch (error) {
+        console.error('加载宏观策略时出错:', error);
+        renderMacroError();
+    }
+}
+
+// 渲染宏观策略内容
+function renderMacroSummary(data) {
+    const container = document.getElementById('macroSummaryContent');
+    if (!container) return;
+
+    let html = '<div class="row">';
+
+    // 宏观部分
+    if (data.macro) {
+        html += `
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 border-primary">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-graph-up-arrow me-2"></i>宏观周报
+                            <span class="badge bg-light text-dark ms-2">${data.macro.date || ''}</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="text-primary mb-3">
+                            <i class="bi bi-fire me-1"></i>热门话题
+                        </h6>
+        `;
+
+        // 热门话题（已按热度排序）
+        data.macro.hot_topics.forEach((topic, index) => {
+            const heatBadge = topic.heat ? `<span class="badge bg-primary ms-2">${topic.heat}</span>` : '';
+            html += `
+                <div class="card mb-2">
+                    <div class="card-body py-2 px-3">
+                        <div class="fw-bold">${topic.name}${heatBadge}</div>
+                        ${topic.summary ? `<small class="text-muted">${topic.summary}</small>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                        <h6 class="text-success mt-3 mb-2">
+                            <i class="bi bi-hand-thumbs-up me-1"></i>市场预期
+                        </h6>
+        `;
+
+        data.macro.consensus.forEach((item) => {
+            html += `
+                <div class="card mb-2">
+                    <div class="card-body py-2 px-3">
+                        <small>${item}</small>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                        <h6 class="text-warning mt-3 mb-2">
+                            <i class="bi bi-briefcase me-1"></i>投资策略
+                        </h6>
+        `;
+
+        data.macro.strategies.forEach((item) => {
+            html += `
+                <div class="card mb-2 border-warning">
+                    <div class="card-body py-2 px-3 bg-warning bg-opacity-10">
+                        <small>${item}</small>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 策略部分
+    if (data.strategy) {
+        html += `
+            <div class="col-lg-6 mb-4">
+                <div class="card h-100 border-success">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-trend-up me-2"></i>策略周报
+                            <span class="badge bg-light text-dark ms-2">${data.strategy.date || ''}</span>
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <h6 class="text-success mb-3">
+                            <i class="bi bi-fire me-1"></i>热门话题
+                        </h6>
+        `;
+
+        // 热门话题（已按热度排序）
+        data.strategy.hot_topics.forEach((topic, index) => {
+            const heatBadge = topic.heat ? `<span class="badge bg-success ms-2">${topic.heat}</span>` : '';
+            html += `
+                <div class="card mb-2">
+                    <div class="card-body py-2 px-3">
+                        <div class="fw-bold">${topic.name}${heatBadge}</div>
+                        ${topic.summary ? `<small class="text-muted">${topic.summary}</small>` : ''}
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                        <h6 class="text-primary mt-3 mb-2">
+                            <i class="bi bi-hand-thumbs-up me-1"></i>市场预期
+                        </h6>
+        `;
+
+        data.strategy.consensus.forEach((item) => {
+            html += `
+                <div class="card mb-2">
+                    <div class="card-body py-2 px-3">
+                        <small>${item}</small>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                        <h6 class="text-warning mt-3 mb-2">
+                            <i class="bi bi-briefcase me-1"></i>投资策略
+                        </h6>
+        `;
+
+        data.strategy.strategies.forEach((item) => {
+            html += `
+                <div class="card mb-2 border-warning">
+                    <div class="card-body py-2 px-3 bg-warning bg-opacity-10">
+                        <small>${item}</small>
+                    </div>
+                </div>
+            `;
+        });
+
+        html += `
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    html += '</div>';
+    container.innerHTML = html;
+}
+
+// 渲染空状态
+function renderMacroEmpty() {
+    const container = document.getElementById('macroSummaryContent');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <i class="bi bi-file-earmark-x text-muted" style="font-size: 3rem;"></i>
+            <p class="mt-3 text-muted">暂无宏观策略数据</p>
+        </div>
+    `;
+}
+
+// 渲染错误状态
+function renderMacroError() {
+    const container = document.getElementById('macroSummaryContent');
+    if (!container) return;
+
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <i class="bi bi-exclamation-triangle text-danger" style="font-size: 2rem;"></i>
+            <p class="mt-2 text-muted">加载宏观策略失败</p>
+            <button class="btn btn-outline-primary btn-sm mt-2" onclick="loadMacroSummary()">
+                <i class="bi bi-arrow-clockwise"></i> 重试
+            </button>
+        </div>
+    `;
+}
+
+// 刷新数据时同时刷新宏观策略
+async function refreshData() {
+    showLoading('正在刷新数据...');
+    try {
+        await loadFilesData();
+        await loadSubjects();
+        await loadMacroSummary();
+        updateStats();
+        showSuccess('数据刷新完成');
+    } catch (error) {
+        showError('刷新失败');
     }
 }
 
@@ -522,19 +733,6 @@ async function scanDataFiles() {
     } catch (error) {
         console.error('扫描文件时出错:', error);
         showError('扫描失败');
-    }
-}
-
-// 刷新数据
-async function refreshData() {
-    showLoading('正在刷新数据...');
-    try {
-        await loadFilesData();
-        await loadSubjects();
-        updateStats();
-        showSuccess('数据刷新完成');
-    } catch (error) {
-        showError('刷新失败');
     }
 }
 

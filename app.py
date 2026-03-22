@@ -26,6 +26,7 @@ BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "data"
 CONFIG_DIR = BASE_DIR / "config"
 SUBJECTS_FILE = CONFIG_DIR / "subjects.json"
+ANALYST_MACRO_DIR = Path("/home/invest/data/analystmacro")
 
 # 确保目录存在
 DATA_DIR.mkdir(exist_ok=True)
@@ -265,6 +266,102 @@ def get_all_latest_data():
             }
     return latest_data
 
+
+def get_latest_macro_summary():
+    """获取最新的宏观策略摘要文件（macro 和 strategy）"""
+    try:
+        # 查找最新的 summary_macro 和 summary_strategy 文件
+        macro_files = list(ANALYST_MACRO_DIR.glob("summary_macro_*.txt"))
+        strategy_files = list(ANALYST_MACRO_DIR.glob("summary_strategy_*.txt"))
+
+        result = {}
+
+        # 处理宏观文件
+        if macro_files:
+            macro_files.sort(key=lambda x: x.name, reverse=True)
+            latest_macro = macro_files[0]
+            with open(latest_macro, 'r', encoding='utf-8') as f:
+                content = f.read()
+            result['macro'] = parse_macro_summary(content, latest_macro.name)
+
+        # 处理策略文件
+        if strategy_files:
+            strategy_files.sort(key=lambda x: x.name, reverse=True)
+            latest_strategy = strategy_files[0]
+            with open(latest_strategy, 'r', encoding='utf-8') as f:
+                content = f.read()
+            result['strategy'] = parse_macro_summary(content, latest_strategy.name)
+
+        return result if result else None
+    except Exception as e:
+        print(f"读取宏观策略文件时出错：{e}")
+        return None
+
+
+def parse_macro_summary(content, filename):
+    """解析宏观策略摘要文件"""
+    sections = {
+        'hot_topics': [],
+        'consensus': [],
+        'strategies': []
+    }
+
+    current_section = None
+    lines = content.split('\n')
+    current_topic = None
+
+    for line in lines:
+        line = line.strip()
+        if '=== 热门宏观话题 ===' in line:
+            current_section = 'hot_topics'
+        elif '=== 市场一致性预期 ===' in line:
+            current_section = 'consensus'
+        elif '=== 推荐投资策略 ===' in line:
+            current_section = 'strategies'
+        elif line and current_section and not line.startswith('==='):
+            if current_section == 'hot_topics':
+                # 热门话题格式：- 话题名称 (热度：X) 或 摘要：xxx
+                if line.startswith('- '):
+                    # 新话题
+                    clean_line = line[2:].strip()
+                    # 提取热度
+                    heat_match = re.search(r'\(热度：(\d+)\)', clean_line)
+                    heat = int(heat_match.group(1)) if heat_match else 0
+                    topic_name = re.sub(r'\s*\(热度：\d+\)', '', clean_line).strip()
+                    current_topic = {'name': topic_name, 'heat': heat, 'summary': ''}
+                    sections[current_section].append(current_topic)
+                elif line.startswith('摘要：') and current_topic:
+                    # 话题摘要
+                    current_topic['summary'] = line[3:].strip()
+            else:
+                # 其他部分
+                clean_line = line.lstrip('- ').strip()
+                if clean_line:
+                    sections[current_section].append(clean_line)
+
+    # 按热度倒序排序
+    sections['hot_topics'].sort(key=lambda x: x['heat'], reverse=True)
+
+    # 提取日期（支持 summary_macro_YYYYMMDD.txt 和 summary_strategy_YYYYMMDD.txt）
+    date_match = re.search(r'summary_(?:macro|strategy)_(\d{8})\.txt', filename)
+    date_str = date_match.group(1) if date_match else None
+    if date_str:
+        date_formatted = f"{date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
+    else:
+        date_formatted = None
+
+    # 确定类型
+    file_type = 'macro' if 'macro' in filename else 'strategy'
+
+    return {
+        'filename': filename,
+        'date': date_formatted,
+        'type': file_type,
+        'hot_topics': sections['hot_topics'],
+        'consensus': sections['consensus'],
+        'strategies': sections['strategies']
+    }
+
 # API路由
 @app.route('/')
 def index():
@@ -449,6 +546,16 @@ def api_get_file_data(file_name):
     except Exception as e:
         print(f"读取文件 {file_path} 时出错：{e}")
         return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/macro-summary', methods=['GET'])
+def api_get_macro_summary():
+    """获取最新的宏观策略摘要"""
+    summary = get_latest_macro_summary()
+    if summary:
+        return jsonify({"success": True, "data": summary})
+    else:
+        return jsonify({"success": False, "message": "暂无宏观策略数据"}), 404
 
 # 文件上传功能已移除
 # 添加新数据文件请直接将CSV文件放入data/目录

@@ -111,7 +111,7 @@ class MultiIndexMerger:
                 )
 
         # 按日期降序排序
-        merged_df = merged_df.sort_values(by='日期Date', ascending=False).reset_index(drop=True)
+        merged_df = merged_df.sort_values(by='日期Date', ascending=True).reset_index(drop=True)
 
         # 显示合并结果
         print("合并结果:")

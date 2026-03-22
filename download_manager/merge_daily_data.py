@@ -33,7 +33,7 @@ class DailyDataMerger:
             print("步骤1: 跳过下载，使用已有数据")
             print("=" * 60)
             # 查找最新下载的CSV文件
-            csv_files = sorted(self.download_dir.glob(f"index_{self.index_code}_*.csv"), reverse=True)
+            csv_files = sorted(self.download_dir.glob(f"index_{self.index_code}_20*.csv"), reverse=True)
             if csv_files:
                 self.daily_csv = csv_files[0]
                 print(f"✓ 找到已有数据文件: {self.daily_csv}")
@@ -66,7 +66,7 @@ class DailyDataMerger:
                 return None
 
             # 查找最新下载的CSV文件
-            csv_files = sorted(self.download_dir.glob(f"index_{self.index_code}_*.csv"), reverse=True)
+            csv_files = sorted(self.download_dir.glob(f"index_{self.index_code}_20*.csv"), reverse=True)
             if csv_files:
                 self.daily_csv = csv_files[0]
                 print(f"\n✓ 找到当天数据文件: {self.daily_csv}")
@@ -157,7 +157,7 @@ class DailyDataMerger:
             print(f"去重后记录数: {len(merged_df)}")
 
         # 按日期降序排序
-        merged_df = merged_df.sort_values(by='日期Date', ascending=False).reset_index(drop=True)
+        merged_df = merged_df.sort_values(by='日期Date', ascending=True).reset_index(drop=True)
 
         # 显示合并结果
         print(f"\n✓ 数据合并完成")

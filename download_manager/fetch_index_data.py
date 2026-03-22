@@ -11,6 +11,13 @@ from pathlib import Path
 import pandas as pd
 
 
+# 支持的指数代码及其对应的 URL 模式
+INDEX_URL_MAP = {
+    "H30269": "https://oss-ch.csindex.com.cn/static/html/csindex/public/uploads/file/autofile/indicator/H30269indicator.xls",
+    "930914": "https://oss-ch.csindex.com.cn/static/html/csindex/public/uploads/file/autofile/indicator/930914indicator.xls",
+    "931446": "https://oss-ch.csindex.com.cn/static/html/csindex/public/uploads/file/autofile/indicator/931446indicator.xls",
+}
+
 class IndexValuationFetcher:
     """指数估值数据获取和解析器"""
 
@@ -20,8 +27,12 @@ class IndexValuationFetcher:
         # 使用用户提供的直接URL模式
         if base_url:
             self.base_url = base_url
-        else:
+        elif index_code in INDEX_URL_MAP:
             # 默认URL模式
+            # 从映射表获取 URL
+            self.base_url = INDEX_URL_MAP[index_code]
+        else:
+            # 默认 URL 模式（适用于未知指数代码）
             self.base_url = f"https://oss-ch.csindex.com.cn/static/html/csindex/public/uploads/file/autofile/indicator/{index_code}indicator.xls"
 
         # 设置下载目录
